@@ -1,0 +1,11 @@
+gsutil
+absl-py
+requests
+numpy
+matplotlib
+h5py
+scipy
+ipython
+pandas
+torch
+torchvision

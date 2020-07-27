@@ -1,3 +1,7 @@
+import sys
+from IPython.core import ultratb
+sys.excepthook = ultratb.FormattedTB(mode='Verbose', color_scheme='Linux', call_pdb=False)
+
 # ADHD (class:0) Pre-Processing
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,49 +10,30 @@ from time import time
 from tqdm import tqdm
 
 # Local modules
-from data_handler import data_handler
-ORGIN_PATH = "C:/OneDrive - Cumberland Valley School District/EEG ScienceFair"
+from helper import *
 
-def batcher(array):
-    if len(BATCH) == 99:
-        BATCH.append(array)
-        np.save(f'{BATCH_PATH}/raw{len(os.listdir(BATCH_PATH))}.npy', BATCH)
-        BATCH.clear()
-    else:
-        BATCH.append(array)
+# Instanciate Database class
+ADHD0 = Database(10, 500, 0, 0.5, f"database/ADHD/ADH0")
 
-
-CLASS_VALUE = {'ADHD':0, 'MDD':1, 'SCHIZO':2, 'NORM':3}['ADHD']
-
-sfreq = 500
-LEN_SEC = 9 # Change length
-BUFF_SEC = 0.5
-
-LENGTH = int(LEN_SEC / (1/sfreq))
-BUFFER_ZONE = int(BUFF_SEC / (1/sfreq))
-BATCH_PATH = f"{ORGIN_PATH}/database/pre-processed_data/raws/ADHD"
-PATH = f"{ORGIN_PATH}/database/ADHD/ADH0"
-
+# Added files containing data to Database class
 dir = []
-for fn in os.listdir(PATH):
+for fn in os.listdir(ADHD0.path):
     if fn[-3:]=='mat' and fn!='chan.mat':
         dir.append(fn)
-    else:
-        continue
+ADHD0.data_filenames = dir
 
-BATCH = []
-
-for filename in tqdm(dir):
-    dl = data_handler(f"{PATH}\{filename}", data_name=filename[:-4])
-    epochs = dl.get_EEG()
+# Iterate though files
+for filename in tqdm(ADHD0.data_filenames):
+    epochs = ADHD0.get_EEG(f"{ADHD0.path}/{filename}", data_name=filename[:-4])
 
     for trial in epochs:
         data = np.transpose(trial) # shape: (5000, 56)
         try:
-            for i in range(BUFFER_ZONE, len(data)-BUFFER_ZONE+LENGTH, LENGTH): # iterates by len
-                EEG = np.transpose(data[i:i+LENGTH]) # before shape (len, 56) : after shape (56, len)
-                batcher([EEG, [CLASS_VALUE]])
+            for i in range(ADHD0.buffer_len, len(data)-ADHD0.buffer_len+ADHD0.sample_len, ADHD0.sample_len): # iterates by len
+                EEG = np.transpose(data[i:i+ADHD0.sample_len]) # before shape (len, 56) : after shape (56, len)
+                print(EEG.shape)
+                #batcher([EEG, [ADHD0.class_value]])
         except Exception as e:
             print(e)
-
-np.save(f'{BATCH_PATH}/raw{len(os.listdir(BATCH_PATH))}.npy', BATCH)
+        break
+    break

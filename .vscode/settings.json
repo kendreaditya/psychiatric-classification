@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "C:\\Users\\akend\\anaconda3\\python.exe"
+    "python.pythonPath": "pytorchTPU/bin/python3",
+    "git.ignoreLimitWarning": true
 }
