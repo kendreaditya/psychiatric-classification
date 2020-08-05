@@ -21,14 +21,7 @@ ADHD0.data_filenames = dir
 # Iterate though files
 for filename in tqdm(ADHD0.data_filenames):
     epochs = ADHD0.get_EEG(f"{ADHD0.path}/{filename}", data_name=filename[:-4],
-                           channels_included="../database/ADHD/ADH0/chan.mat")
+                           channels="../database/ADHD/ADH0/chan.mat")
     channel_locations = ADHD0.get_channel_locations()
-
-    for trial in epochs:
-        data = np.transpose(trial) # shape: (5000, 56)
-        try:
-            for i in range(ADHD0.buffer_len, len(data)-ADHD0.buffer_len, ADHD0.sample_len): # iterates by len
-                EEG = np.transpose(data[i:i+ADHD0.sample_len]) # before shape (len, 56) : after shape (56, len)
-                #batcher([EEG, [ADHD0.class_value]])
-        except Exception as e:
-            print(e)
+    segmented_EEG = ADHD0.EEG_segmentation(epochs)
+    print(segmented_EEG.shape)

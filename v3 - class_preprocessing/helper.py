@@ -14,17 +14,19 @@ class Database:
         self.data_filenames = data_filenames
 
     # Helper Method
-    def set_file(self, file_path, data_name='EEG', channels_included=None):
+    def set_file(self, file_path, data_name='EEG', channels=None, field=None):
         try:
             self.raw_data = loadmat(file_path)
+            if field is not None:
+                self.raw_data = self.raw_data[field]
         except:
             self.raw_data = h5py.File(file_path, 'r')
         self.EEG = self.r_indices(self.raw_data[data_name])
-        if channels_included is not None:
-            if channels_included in self.raw_data.keys():
-                self.channel_locations = self.raw_data[channels_included]
-            else:
-                self.channel_locations = loadmat(channels_included)
+        if channels is not None:
+            try:
+                self.channel_locations = self.raw_data[channels]
+            except:
+                self.channel_locations = loadmat(channels)
 
     # Helper Method
     def r_indices(self, array):
@@ -35,8 +37,19 @@ class Database:
         except:
             return array
 
-    def get_EEG(self, file_path, data_name='EEG', channels_included=None):
-        self.set_file(file_path, data_name, channels_included)
+    def EEG_segmentation(self, epochs):
+        for trial in epochs:
+            data = np.transpose(trial)
+            segmented_EEG = []
+            try:
+                for i in range(self.buffer_len, len(data)-self.buffer_len, self.sample_len): # iterates by len
+                    segmented_EEG.append(np.transpose(data[i:i+self.sample_len])) # before shape (len, 56) : after shape (56, len)
+            except Exception as e:
+                print(e)
+        return segmented_EEG
+
+    def get_EEG(self, file_path, data_name='EEG', channels=None, field=None):
+        self.set_file(file_path, data_name, channels, field)
         return self.EEG
 
     def get_channel_locations(self):

@@ -1,4 +1,4 @@
-# ADHD (class:0) Pre-Processing
+# DEPR (class:1) Pre-Processing
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -6,49 +6,41 @@ from time import time
 from tqdm import tqdm
 
 # Local modules
-from data_handler import data_handler
-ORGIN_PATH = "C:/OneDrive - Cumberland Valley School District/EEG ScienceFair"
+from helper import *
 
-def batcher(array):
-    if len(BATCH) == 99:
-        BATCH.append(array)
-        np.save(f'{BATCH_PATH}/raw{len(os.listdir(BATCH_PATH))}.npy', BATCH)
-        BATCH.clear()
-    else:
-        BATCH.append(array)
+# Instanciate Database class
+# DEPR0 and DEPR1 don't corrospond to database DEPR0 and DEPR1, but rather are a divison between
+# 1-MDD & 2-had MDD
+DEPR0 = Database(len_sec=10, sampling_freq=500, class_value=1, buffer_sec=0.5, path="../database/depression/DEPR0/")
+DEPR1 = Database(len_sec=10, sampling_freq=500, class_value=2, buffer_sec=0.5, path="../database/depression/DEPR0/")
 
 
-CLASS_VALUE = {'ADHD':0, 'MDD':1, 'SCHIZO':2, 'NORM':3}['ADHD']
+# Added files containing data to Database class
+DEPR0_list, DEPR1_list = [], []
+data_files = np.genfromtxt("../database/depression/DEPR0/trial-information/Data_4_Import_REST.csv", delimiter=",", dtype=str)
+for file in data_files[1:]:
+    if file[1] == '1':
+        DEPR0_list.append(f"{file[0]}_Depression_REST.mat")
+    elif file[1] == '2':
+        DEPR1_list.append(f"{file[0]}_Depression_REST.mat")
+DEPR0.data_filenames = DEPR0_list
+DEPR1.data_filenames = DEPR1_list
 
-sfreq = 500
-LEN_SEC = 9 # Change length
-BUFF_SEC = 0.5
+# Iterate though files
+for filename in tqdm(DEPR0.data_filenames):
+    try:
+        epochs = DEPR0.get_EEG(f"{DEPR0.path}/{filename}", data_name='data', channels="chanlocs", field='EEG')
+        channel_locations = DEPR0.get_channel_locations()
+        segmented_EEG = DEPR0.EEG_segmentation(epochs)
+        print(segmented_EEG)
+    except:
+        pass
 
-LENGTH = int(LEN_SEC / (1/sfreq))
-BUFFER_ZONE = int(BUFF_SEC / (1/sfreq))
-BATCH_PATH = f"{ORGIN_PATH}/database/pre-processed_data/raws/ADHD"
-PATH = f"{ORGIN_PATH}/database/ADHD/ADH0"
-
-dir = []
-for fn in os.listdir(PATH):
-    if fn[-3:]=='mat' and fn!='chan.mat':
-        dir.append(fn)
-    else:
-        continue
-
-BATCH = []
-
-for filename in tqdm(dir):
-    dl = data_handler(f"{PATH}\{filename}", data_name=filename[:-4])
-    epochs = dl.get_EEG()
-
-    for trial in epochs:
-        data = np.transpose(trial) # shape: (5000, 56)
-        try:
-            for i in range(BUFFER_ZONE, len(data)-BUFFER_ZONE+LENGTH, LENGTH): # iterates by len
-                EEG = np.transpose(data[i:i+LENGTH]) # before shape (len, 56) : after shape (56, len)
-                batcher([EEG, [CLASS_VALUE]])
-        except Exception as e:
-            print(e)
-
-np.save(f'{BATCH_PATH}/raw{len(os.listdir(BATCH_PATH))}.npy', BATCH)
+for filename in tqdm(DEPR1.data_filenames):
+    try:
+        epochs = DEPR1.get_EEG(f"{DEPR1.path}/{filename}", data_name='data', channels="chanlocs", field='EEG')
+        channel_locations = DEPR1.get_channel_locations()
+        segmented_EEG = DEPR1.EEG_segmentation(epochs)
+        print(segmented_EEG)
+    except:
+        pass
