@@ -12,17 +12,19 @@ class Database:
         self.sample_len = int(self.len_sec/(1/self.sampling_freq))
         self.buffer_len = int(self.buffer_sec/(1/self.sampling_freq))
         self.data_filenames = data_filenames
-    
+
     # Helper Method
     def set_file(self, file_path, data_name='EEG', channels_included=None):
         try:
             self.raw_data = loadmat(file_path)
         except:
             self.raw_data = h5py.File(file_path, 'r')
-        print(self.raw_data.keys())
         self.EEG = self.r_indices(self.raw_data[data_name])
         if channels_included is not None:
-            self.raw_channel_info = self.r_indices(self.raw_data[data_name][channels_included])
+            if channels_included in self.raw_data.keys():
+                self.channel_locations = self.raw_data[channels_included]
+            else:
+                self.channel_locations = loadmat(channels_included)
 
     # Helper Method
     def r_indices(self, array):
@@ -35,7 +37,10 @@ class Database:
 
     def get_EEG(self, file_path, data_name='EEG', channels_included=None):
         self.set_file(file_path, data_name, channels_included)
-        return self.EEG      
+        return self.EEG
+
+    def get_channel_locations(self):
+        return self.channel_locations
 
 class EEG:
     def __init__(self, rEEG, channel_locations, CLASS, seq_len=5, cutoff_freq=60):
@@ -49,21 +54,21 @@ class EEG:
 
     def preprocessing(self, EEG):
         return EEG
-    
+
     def source_reconstruction(EEG, channel_locations, remaped_channel_locations):
         return EEG
-    
+
     def topograph(self, EEG):
         return topoQEEG
-    
+
     def img(self, topoQEEG):
         return imgQEEG
 
     def get_dict(self):
-        return {'rawEEG':self.rEEG, 
-                'preprocessedEEG':self.pEEG, 
-                'topograph':self.topoQEEG, 
-                'image':self.imgQEEG, 
-                'channel_locations':self.channel_locations, 
-                'class':self.CLASS, 
+        return {'rawEEG':self.rEEG,
+                'preprocessedEEG':self.pEEG,
+                'topograph':self.topoQEEG,
+                'image':self.imgQEEG,
+                'channel_locations':self.channel_locations,
+                'class':self.CLASS,
                 'sequence_length':self.seq_len}

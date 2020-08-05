@@ -1,0 +1,10 @@
+h - left
+l - right
+j - up
+k - down
+yy - yank (copy)
+dd - delelte line
+v - visual
+d - delete selected
+u - undo
+
