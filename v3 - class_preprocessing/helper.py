@@ -1,7 +1,6 @@
 from scipy.io import loadmat
 import numpy as np
 import h5py
-
 class Database:
     def __init__(self, len_sec, sampling_freq, class_value, buffer_sec, path, data_filenames=None):
         self.len_sec = len_sec
@@ -14,7 +13,14 @@ class Database:
         self.data_filenames = data_filenames
 
     # Helper Method
-    def set_file(self, file_path, data_name='EEG', channels=None, field=None):
+    def data_txt(self, file_path, sample_chan):
+        self.raw_data = np.genfromtxt(file_path, delimiter='\n', dtype=str)
+        for i in range(0, len(self.raw_data), sample_chan):
+            self.EEG.append(self.raw_data[i:i+sample_chan])
+        return self.EEG
+
+    # Helper Method
+    def data_matlab(self, file_path, data_name, field, channels):
         try:
             self.raw_data = loadmat(file_path)
             if field is not None:
@@ -27,6 +33,15 @@ class Database:
                 self.channel_locations = self.raw_data[channels]
             except:
                 self.channel_locations = loadmat(channels)
+        return self.EEG
+
+
+    # Helper Method
+    def set_file(self, file_path, data_name='EEG', channels=None, field=None, file_type=None):
+        if file_type.split(' ')[0] == 'txt':
+            self.data_txt(file_path, int(file_type.split(' ')[1]))
+        elif file_type == 'matlab':
+            self.data_matlab(file_path, data_name, field, channels)
 
     # Helper Method
     def r_indices(self, array):
@@ -61,21 +76,21 @@ class EEG:
         self.channel_locations = channel_locations
         self.seq_len = seq_len
         self.CLASS = CLASS
-        self.pEEG = preprocessing(self.rEEG)
-        self.topoQEEG = topograph(self.pEEG)
-        self.imgQEEG = img(self.topoQEEG)
+        self.pEEG = self.preprocessing(self.rEEG)
+        self.topoQEEG = self.topograph(self.pEEG)
+        self.imgQEEG = self.img(self.topoQEEG)
 
     def preprocessing(self, EEG):
         return EEG
 
-    def source_reconstruction(EEG, channel_locations, remaped_channel_locations):
+    def source_reconstruction(self, EEG, channel_locations, remaped_channel_locations):
         return EEG
 
     def topograph(self, EEG):
-        return topoQEEG
+        return self.topoQEEG
 
     def img(self, topoQEEG):
-        return imgQEEG
+        return self.imgQEEG
 
     def get_dict(self):
         return {'rawEEG':self.rEEG,
