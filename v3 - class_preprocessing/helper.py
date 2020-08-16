@@ -15,8 +15,7 @@ class Database:
     # Helper Method
     def data_txt(self, file_path, sample_chan):
         self.raw_data = np.genfromtxt(file_path, delimiter='\n', dtype=str)
-        for i in range(0, len(self.raw_data), sample_chan):
-            self.EEG.append(self.raw_data[i:i+sample_chan])
+        self.EEG = [[self.raw_data[i:i+sample_chan] for i in range(0, len(self.raw_data), sample_chan)]]
         return self.EEG
 
     # Helper Method
@@ -63,8 +62,8 @@ class Database:
                 print(e)
         return segmented_EEG
 
-    def get_EEG(self, file_path, data_name='EEG', channels=None, field=None):
-        self.set_file(file_path, data_name, channels, field)
+    def get_EEG(self, file_path, data_name='EEG', channels=None, field=None, file_type='matlab'):
+        self.set_file(file_path, data_name, channels, field, file_type)
         return self.EEG
 
     def get_channel_locations(self):
